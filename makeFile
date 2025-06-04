@@ -1,0 +1,60 @@
+APP_NAME=user-service
+DOCKER_COMPOSE=docker-compose
+DOCKER_COMPOSE_FILE=docker-compose.yml
+
+.PHONY: build run clean docker-build docker-run docker-stop docker-clean db-start db-stop compose-up compose-down
+
+# Build Go binary locally
+build:
+	go build -o bin/$(APP_NAME) main.go
+
+# Run Go app locally (without Docker)
+run:
+	go run main.go
+
+# Clean local build artifacts
+clean:
+	go clean
+	rm -rf bin/
+
+# Build Docker image (if you have a Dockerfile)
+docker-build:
+	docker build -t $(APP_NAME):latest .
+
+# Run Docker container (not using compose)
+docker-run:
+	docker run -d --name $(APP_NAME)-container \
+		-p 3000:3000 \
+		--env-file .env \
+		$(APP_NAME):latest
+
+# Stop and remove Docker container
+docker-stop:
+	docker stop $(APP_NAME)-container || true
+	docker rm $(APP_NAME)-container || true
+
+# Remove Docker image and container
+docker-clean: docker-stop
+	docker rmi $(APP_NAME):latest || true
+
+# Start Postgres container alone (alternative to compose)
+db-start:
+	docker run -d --name user_service_learn \
+		-e POSTGRES_USER=$$DB_USER \
+		-e POSTGRES_PASSWORD=$$DB_PASSWORD \
+		-e POSTGRES_DB=$$DB_NAME \
+		-p 5432:5432 \
+		postgres:16-alpine
+
+# Stop Postgres container alone
+db-stop:
+	docker stop user_service_learn || true
+	docker rm user_service_learn || true
+
+# Bring up full stack with docker-compose (app + db)
+compose-up:
+	$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) up --build
+
+# Stop and remove containers created by docker-compose
+compose-down:
+	$(DOCKER_COMPOSE) -f $(DOCKER_COMPOSE_FILE) down
