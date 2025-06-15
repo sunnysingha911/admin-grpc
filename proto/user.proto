@@ -6,7 +6,7 @@ option go_package = "gen/user-service/userpb";
 
 service UserService {
   rpc Login(LoginRequest) returns (LoginResponse);
-  rpc GetUser(GetUserRequest) returns (User);
+  rpc GetUserById(GetUserRequest) returns (GetUserResponse);
   rpc GetAllUsers(GetAllUserRequest) returns (UsersListResponse);
   rpc UpdateUser(UpdateUserRequest) returns (User);
   rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
@@ -31,8 +31,12 @@ message User {
   string created_at = 5;
 }
 
+message GetUserResponse {
+  User user = 1;
+}
+
 message GetUserRequest {
-  int32 id = 1;
+  string id = 1;
 }
 
 message UpdateUserRequest {

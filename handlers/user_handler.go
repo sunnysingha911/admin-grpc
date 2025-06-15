@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/sunnysingha911/admin-service/gen/user-service/userpb"
 	"github.com/sunnysingha911/admin-service/grpc"
 
@@ -45,13 +46,17 @@ func (h *UserHandler) Login(c *fiber.Ctx) error {
 
 // GetUser handler calls GetUser RPC
 func (h *UserHandler) GetUser(c *fiber.Ctx) error {
-	id, err := strconv.Atoi(c.Params("id"))
+	id := c.Params("id")
+	_, err := uuid.Parse(id)
+
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid id"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid UUID format",
+		})
 	}
 
-	user, err := h.GrpcClient.Client.GetUser(context.Background(), &userpb.GetUserRequest{
-		Id: int32(id),
+	user, err := h.GrpcClient.Client.GetUserById(context.Background(), &userpb.GetUserRequest{
+		Id: string(id),
 	})
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
