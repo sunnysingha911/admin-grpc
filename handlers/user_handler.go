@@ -60,6 +60,30 @@ func (h *UserHandler) GetUser(c *fiber.Ctx) error {
 	return c.JSON(user)
 }
 
+func (h *UserHandler) GetAllUser(c *fiber.Ctx) error {
+	page, err := strconv.Atoi(c.Query("page", "1"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+	limit, err := strconv.Atoi(c.Query("limit", "10"))
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	res, err := h.GrpcClient.Client.GetAllUsers(context.Background(), &userpb.GetAllUserRequest{
+		Page:  int32(page),
+		Limit: int32(limit),
+	})
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"meta":  res.Meta,
+		"users": res.Users,
+	})
+}
+
 // UpdateUser handler calls UpdateUser RPC
 func (h *UserHandler) UpdateUser(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
